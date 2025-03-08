@@ -1,8 +1,8 @@
 package response
 
 import (
-	"client-service/constants"
-	"github.com/gofiber/fiber/v2"
+	"employee-service/constants"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -17,22 +17,23 @@ type ParamHTTPResp struct {
 	Code    int
 	Err     error
 	Message *string
-	Fiber   *fiber.Ctx
+	Gin     *gin.Context
 	Data    interface{}
 	Token   *string
 }
 
-func HttpResponse(param ParamHTTPResp) error {
+func HttpResponse(param ParamHTTPResp) {
 	if param.Err == nil {
-		return param.Fiber.Status(param.Code).JSON(Response{
+		param.Gin.JSON(param.Code, Response{
 			Status:  constants.Success,
 			Message: http.StatusText(http.StatusOK),
 			Data:    param.Data,
 			Token:   param.Token,
 		})
+		return
 	}
 
-	message := fiber.ErrInternalServerError.Error()
+	message := constants.ErrInternal.Error()
 	if param.Message != nil {
 		message = *param.Message
 	} else if param.Err != nil {
@@ -41,9 +42,10 @@ func HttpResponse(param ParamHTTPResp) error {
 		}
 	}
 
-	return param.Fiber.Status(param.Code).JSON(Response{
+	param.Gin.JSON(param.Code, Response{
 		Status:  constants.Error,
 		Message: message,
 		Data:    param.Data,
 	})
+	return
 }

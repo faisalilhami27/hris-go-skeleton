@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -9,9 +8,9 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func GenerateSHA256(inputString string) string {
@@ -113,30 +112,11 @@ func SetEnvFromConsulKV(v *viper.Viper) error {
 	return nil
 }
 
-func FormatCompanyName(name string) string {
-	businessEntities := []string{"PT", "CV", "LTD", "PTE", "Corp", "Inc"}
-	re := regexp.MustCompile(`[^a-zA-Z\s]`)
-	cleaned := re.ReplaceAllString(name, "")
-	words := strings.Fields(cleaned)
-
-	var filteredWords []string
-	for _, word := range words {
-		if !contains(businessEntities, word) {
-			filteredWords = append(filteredWords, word)
-		}
+func Recover() {
+	if r := recover(); r != nil {
+		logrus.SetLevel(logrus.ErrorLevel)
+		logrus.Errorf("recovered from panic: %v", r)
 	}
-
-	formatted := strings.ToLower(strings.Join(filteredWords, "-"))
-	return formatted
-}
-
-func contains(slice []string, item string) bool {
-	for _, str := range slice {
-		if strings.EqualFold(str, item) {
-			return true
-		}
-	}
-	return false
 }
 
 func RupiahFormat(amount *float64) string {
@@ -148,51 +128,37 @@ func RupiahFormat(amount *float64) string {
 	return fmt.Sprintf("Rp. %s", stringValue)
 }
 
-func Recover() {
-	if r := recover(); r != nil {
-		logrus.SetLevel(logrus.ErrorLevel)
-		logrus.Errorf("recovered from panic: %v", r)
+func IndonesianDateFormat(t time.Time, isYear bool) string {
+	monthID := map[time.Month]string{
+		1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun",
+		7: "Jul", 8: "Agu", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des",
 	}
+
+	day := t.Day()
+	month := monthID[t.Month()]
+	year := t.Year()
+
+	if isYear == false {
+		return fmt.Sprintf("%d %s", day, month)
+	}
+	return fmt.Sprintf("%d %s %d", day, month, year)
 }
 
-func add1(a int) int {
-	return a + 1
-}
-
-func GeneratePDFFromHTML(htmlTemplate string, data any) ([]byte, error) {
-	funcMap := template2.FuncMap{
-		"add1": add1,
+func IndonesianMonthFormat(month int) string {
+	monthID := map[int]string{
+		1:  "Januari",
+		2:  "Februari",
+		3:  "Maret",
+		4:  "April",
+		5:  "Mei",
+		6:  "Juni",
+		7:  "Juli",
+		8:  "Agustus",
+		9:  "September",
+		10: "Oktober",
+		11: "November",
+		12: "Desember",
 	}
 
-	template, err := template.New("htmlTemplate").Funcs(funcMap).Parse(htmlTemplate)
-	if err != nil {
-		return nil, err
-	}
-
-	var filledTemplate bytes.Buffer
-	if err := template.Execute(&filledTemplate, data); err != nil {
-		return nil, err
-	}
-	htmlContent := filledTemplate.String()
-
-	pdfGenerator, err := wkhtmltopdf.NewPDFGenerator()
-	if err != nil {
-		logrus.Errorf("failed to create pdf generator: %v", err)
-		return nil, err
-	}
-
-	pdfGenerator.Dpi.Set(600)
-	pdfGenerator.NoCollate.Set(false)
-	pdfGenerator.Orientation.Set(wkhtmltopdf.OrientationPortrait)
-	pdfGenerator.PageSize.Set(wkhtmltopdf.PageSizeA4)
-	pdfGenerator.Grayscale.Set(false)
-	pdfGenerator.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(htmlContent)))
-
-	err = pdfGenerator.Create()
-	if err != nil {
-		logrus.Errorf("failed to create pdf: %v", err)
-		return nil, err
-	}
-
-	return pdfGenerator.Bytes(), err
+	return monthID[month]
 }
