@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/dustin/go-humanize"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
