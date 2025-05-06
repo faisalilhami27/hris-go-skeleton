@@ -5,8 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
+	"github.com/dustin/go-humanize"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"html/template"
 	"os"
 	"reflect"
 	"regexp"
@@ -160,7 +163,7 @@ func add1(a int) int {
 }
 
 func GeneratePDFFromHTML(htmlTemplate string, data any) ([]byte, error) {
-	funcMap := template2.FuncMap{
+	funcMap := template.FuncMap{
 		"add1": add1,
 	}
 
